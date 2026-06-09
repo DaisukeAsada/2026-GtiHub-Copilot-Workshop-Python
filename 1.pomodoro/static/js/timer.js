@@ -637,7 +637,6 @@ function drawParticles() {
       particleCtx.stroke();
     }
   }
-  }
 
   particleCtx.globalAlpha = 1;
 }
