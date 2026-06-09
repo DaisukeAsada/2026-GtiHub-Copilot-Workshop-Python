@@ -624,6 +624,8 @@ function drawParticles() {
     const cx = w / 2;
     const cy = h / 2;
     const time = Date.now() / 1000;
+    const color = computeProgressColor(remainingSeconds, totalDurationSeconds);
+    particleCtx.strokeStyle = color;
     for (let i = 0; i < 3; i++) {
       const phase = (time + i * 1.2) % 3.6;
       const rippleRadius = (phase / 3.6) * (w * 0.45);
@@ -631,10 +633,10 @@ function drawParticles() {
       particleCtx.globalAlpha = rippleAlpha;
       particleCtx.beginPath();
       particleCtx.arc(cx, cy, rippleRadius, 0, Math.PI * 2);
-      particleCtx.strokeStyle = computeProgressColor(remainingSeconds, totalDurationSeconds);
       particleCtx.lineWidth = 1.5;
       particleCtx.stroke();
     }
+  }
   }
 
   particleCtx.globalAlpha = 1;
