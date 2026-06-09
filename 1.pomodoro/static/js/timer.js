@@ -610,11 +610,12 @@ function drawParticles() {
   const h = particleCanvas.height / window.devicePixelRatio;
   particleCtx.clearRect(0, 0, w, h);
 
+  const color = computeProgressColor(remainingSeconds, totalDurationSeconds);
+  particleCtx.fillStyle = color;
   for (const p of particles) {
     particleCtx.globalAlpha = p.life * 0.6;
     particleCtx.beginPath();
     particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    particleCtx.fillStyle = computeProgressColor(remainingSeconds, totalDurationSeconds);
     particleCtx.fill();
   }
 
