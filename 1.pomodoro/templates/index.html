@@ -25,7 +25,12 @@
   <p id="set-count-text" class="set-count-text">0 セット完了</p>
 
       <section class="timer-area" aria-label="タイマー表示">
+        <canvas id="particle-canvas" class="particle-canvas"></canvas>
         <div id="progress-ring" class="progress-ring">
+          <svg class="progress-ring-svg" viewBox="0 0 200 200">
+            <circle class="progress-ring-track" cx="100" cy="100" r="88" />
+            <circle id="progress-ring-indicator" class="progress-ring-indicator" cx="100" cy="100" r="88" />
+          </svg>
           <div class="progress-inner">
             <p id="time-text" class="time-text">25:00</p>
           </div>

@@ -2,6 +2,7 @@ import {
   computeNextSession,
   parsePersistedTimerState,
   computeProgressPercent,
+  computeProgressColor,
   computeRemainingSeconds,
   formatTime,
   getModeDurationSeconds,
@@ -23,7 +24,9 @@ const MODE_LABELS = {
 
 const modeLabel = document.getElementById("mode-label");
 const setCountText = document.getElementById("set-count-text");
-const progressRing = document.getElementById("progress-ring");
+const progressRingIndicator = document.getElementById("progress-ring-indicator");
+const particleCanvas = document.getElementById("particle-canvas");
+const particleCtx = particleCanvas.getContext("2d");
 const timeText = document.getElementById("time-text");
 const statsCompletedCount = document.getElementById("stats-completed-count");
 const statsFocusDuration = document.getElementById("stats-focus-duration");
@@ -392,9 +395,15 @@ function setStartPauseLabel() {
   startPauseButton.textContent = "再開";
 }
 
+const RING_CIRCUMFERENCE = 2 * Math.PI * 88; // ~553
+
 function renderProgressRing() {
   const percent = computeProgressPercent(remainingSeconds, totalDurationSeconds);
-  progressRing.style.background = `conic-gradient(var(--accent) 0 ${percent}%, var(--track) ${percent}% 100%)`;
+  const offset = RING_CIRCUMFERENCE * (1 - percent / 100);
+  progressRingIndicator.style.strokeDashoffset = String(offset);
+
+  const color = computeProgressColor(remainingSeconds, totalDurationSeconds);
+  progressRingIndicator.style.stroke = color;
 }
 
 function renderSetCount() {
@@ -407,6 +416,12 @@ function render() {
   timeText.textContent = formatTime(remainingSeconds);
   renderProgressRing();
   setStartPauseLabel();
+
+  if (isRunning && currentMode === "work") {
+    startParticleAnimation();
+  } else {
+    stopParticleAnimation();
+  }
 }
 
 function startTicking() {
@@ -542,6 +557,118 @@ saveSettingsButton.addEventListener("click", () => {
 });
 enableNotificationButton.addEventListener("click", () => {
   void requestNotificationPermission();
+});
+
+// --- Particle / Ripple Effect ---
+const particles = [];
+let particleAnimationId = null;
+
+function resizeParticleCanvas() {
+  const rect = particleCanvas.getBoundingClientRect();
+  particleCanvas.width = rect.width * window.devicePixelRatio;
+  particleCanvas.height = rect.height * window.devicePixelRatio;
+  particleCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+}
+
+function createParticle() {
+  const canvas = particleCanvas;
+  const w = canvas.width / window.devicePixelRatio;
+  const h = canvas.height / window.devicePixelRatio;
+  const cx = w / 2;
+  const cy = h / 2;
+  const angle = Math.random() * Math.PI * 2;
+  const radius = Math.random() * 40 + 20;
+  return {
+    x: cx + Math.cos(angle) * radius,
+    y: cy + Math.sin(angle) * radius,
+    vx: (Math.random() - 0.5) * 0.5,
+    vy: (Math.random() - 0.5) * 0.5,
+    life: 1.0,
+    decay: Math.random() * 0.008 + 0.004,
+    size: Math.random() * 3 + 1.5,
+  };
+}
+
+function updateParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= p.decay;
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+
+  if (isRunning && currentMode === "work" && particles.length < 30) {
+    particles.push(createParticle());
+  }
+}
+
+function drawParticles() {
+  const w = particleCanvas.width / window.devicePixelRatio;
+  const h = particleCanvas.height / window.devicePixelRatio;
+  particleCtx.clearRect(0, 0, w, h);
+
+  const color = computeProgressColor(remainingSeconds, totalDurationSeconds);
+  particleCtx.fillStyle = color;
+  for (const p of particles) {
+    particleCtx.globalAlpha = p.life * 0.6;
+    particleCtx.beginPath();
+    particleCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    particleCtx.fill();
+  }
+
+  // Ripple effect
+  if (isRunning && currentMode === "work") {
+    const cx = w / 2;
+    const cy = h / 2;
+    const time = Date.now() / 1000;
+    const color = computeProgressColor(remainingSeconds, totalDurationSeconds);
+    particleCtx.strokeStyle = color;
+    for (let i = 0; i < 3; i++) {
+      const phase = (time + i * 1.2) % 3.6;
+      const rippleRadius = (phase / 3.6) * (w * 0.45);
+      const rippleAlpha = (1 - phase / 3.6) * 0.15;
+      particleCtx.globalAlpha = rippleAlpha;
+      particleCtx.beginPath();
+      particleCtx.arc(cx, cy, rippleRadius, 0, Math.PI * 2);
+      particleCtx.lineWidth = 1.5;
+      particleCtx.stroke();
+    }
+  }
+
+  particleCtx.globalAlpha = 1;
+}
+
+function animateParticles() {
+  updateParticles();
+  drawParticles();
+  particleAnimationId = requestAnimationFrame(animateParticles);
+}
+
+function startParticleAnimation() {
+  if (particleAnimationId === null) {
+    resizeParticleCanvas();
+    animateParticles();
+  }
+}
+
+function stopParticleAnimation() {
+  if (particleAnimationId !== null) {
+    cancelAnimationFrame(particleAnimationId);
+    particleAnimationId = null;
+    const w = particleCanvas.width / window.devicePixelRatio;
+    const h = particleCanvas.height / window.devicePixelRatio;
+    particleCtx.clearRect(0, 0, w, h);
+    particles.length = 0;
+  }
+}
+
+window.addEventListener("resize", () => {
+  if (particleAnimationId !== null) {
+    resizeParticleCanvas();
+  }
 });
 
 restoreStateFromStorage();

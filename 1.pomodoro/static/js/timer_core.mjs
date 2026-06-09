@@ -117,6 +117,33 @@ export function parsePersistedTimerState(raw) {
   };
 }
 
+export function computeProgressColor(remainingSeconds, totalDurationSeconds) {
+  if (totalDurationSeconds === 0) {
+    return "rgb(220, 50, 50)";
+  }
+
+  const ratio = clamp(remainingSeconds / totalDurationSeconds, 0, 1);
+
+  // Blue (start) -> Yellow (mid) -> Red (end)
+  // ratio 1.0 = full time remaining = blue (#4A90D9)
+  // ratio 0.5 = half time = yellow (#E8B84A)
+  // ratio 0.0 = no time = red (#DC3232)
+  let r, g, b;
+  if (ratio > 0.5) {
+    const t = (ratio - 0.5) * 2; // 0..1 mapping yellow->blue
+    r = Math.round(232 + (74 - 232) * t);
+    g = Math.round(184 + (144 - 184) * t);
+    b = Math.round(74 + (217 - 74) * t);
+  } else {
+    const t = ratio * 2; // 0..1 mapping red->yellow
+    r = Math.round(220 + (232 - 220) * t);
+    g = Math.round(50 + (184 - 50) * t);
+    b = Math.round(50 + (74 - 50) * t);
+  }
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 export function resolveRestoredTimerState({
   persistedState,
   currentMs,

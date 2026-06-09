@@ -5,6 +5,7 @@ import {
   clamp,
   computeNextSession,
   computeProgressPercent,
+  computeProgressColor,
   computeRemainingSeconds,
   formatTime,
   getModeDurationSeconds,
@@ -189,4 +190,24 @@ test("resolveRestoredTimerState treats expired running session as completed", ()
     isRunning: false,
     deadlineMs: null,
   });
+});
+
+test("computeProgressColor returns blue at full time", () => {
+  const color = computeProgressColor(1500, 1500);
+  assert.equal(color, "rgb(74, 144, 217)");
+});
+
+test("computeProgressColor returns yellow at half time", () => {
+  const color = computeProgressColor(750, 1500);
+  assert.equal(color, "rgb(232, 184, 74)");
+});
+
+test("computeProgressColor returns red at zero time", () => {
+  const color = computeProgressColor(0, 1500);
+  assert.equal(color, "rgb(220, 50, 50)");
+});
+
+test("computeProgressColor returns red when totalDuration is zero", () => {
+  const color = computeProgressColor(0, 0);
+  assert.equal(color, "rgb(220, 50, 50)");
 });
