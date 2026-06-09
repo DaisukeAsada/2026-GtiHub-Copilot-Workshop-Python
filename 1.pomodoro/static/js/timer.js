@@ -356,7 +356,7 @@ function restoreStateFromStorage() {
     persistedState: parsedState,
     currentMs: Date.now(),
     durations: DURATIONS,
-    longBreakInterval: LONG_BREAK_INTERVAL,
+    longBreakInterval: longBreakInterval,
   });
 
   currentMode = restored.currentMode;
