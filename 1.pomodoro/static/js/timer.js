@@ -24,7 +24,6 @@ const MODE_LABELS = {
 
 const modeLabel = document.getElementById("mode-label");
 const setCountText = document.getElementById("set-count-text");
-const progressRing = document.getElementById("progress-ring");
 const progressRingIndicator = document.getElementById("progress-ring-indicator");
 const particleCanvas = document.getElementById("particle-canvas");
 const particleCtx = particleCanvas.getContext("2d");
